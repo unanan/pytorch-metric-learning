@@ -12,9 +12,6 @@
 - Python >= 3.6 (Because I love f-string)
 - Pytorch better >=1.3 (It's developed under pt1.3)
 
-### Introduction of some important scripts
-- a
-
 ### Prepare datasets
 - a
 
@@ -24,3 +21,9 @@
 ### Test / Inference for deploying
 - a
 
+### Introduction of some important scripts
+- a
+
+#### Reference
+- BADBADBADBOY/pytorch.ctpn
+- dbolya/yolact

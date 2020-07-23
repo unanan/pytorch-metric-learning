@@ -7,6 +7,11 @@ import torch.nn.functional as F
 import cv2
 import numpy as np
 
+transforms= {
+    "train": {},
+    "val":{},
+    "test":{}
+}
 
 class BaseDataset(data.Dataset):
     """`MS Coco Detection <http://mscoco.org/dataset/#detections-challenge2016>`_ Dataset.
@@ -21,37 +26,12 @@ class BaseDataset(data.Dataset):
     """
 
     def __init__(self, image_path, info_file, transform=None,
-                 target_transform=None,
-                 dataset_name='MS COCO', has_gt=True):
-        # Do this here because we have too many things named COCO
-        from pycocotools.coco import COCO
-
-        if target_transform is None:
-            target_transform = COCOAnnotationTransform()
-
-        self.root = image_path
-        self.coco = COCO(info_file)
-
-        self.ids = list(self.coco.imgToAnns.keys())
-        if len(self.ids) == 0 or not has_gt:
-            self.ids = list(self.coco.imgs.keys())
-
-        self.transform = transform
-        self.target_transform = COCOAnnotationTransform()
-
-        self.name = dataset_name
-        self.has_gt = has_gt
+                 target_transform=None):
+        with open(info_file)
+        self.ids
 
     def __getitem__(self, index):
-        """
-        Args:
-            index (int): Index
-        Returns:
-            tuple: Tuple (image, (target, masks, num_crowds)).
-                   target is the object returned by ``coco.loadAnns``.
-        """
-        im, gt, masks, h, w, num_crowds = self.pull_item(index)
-        return im, (gt, masks, num_crowds)
+        raise NotImplementedError()
 
     def __len__(self):
         return len(self.ids)
@@ -178,5 +158,5 @@ class BaseDataset(data.Dataset):
 
 
 class CustomDataset(BaseDataset):
-    def __init__(self):
-        pass
+    def __init__(self,image_path, info_file, transform=None,target_transform=None):
+        super(CustomDataset, self).__init__(image_path, info_file, transform, target_transform)

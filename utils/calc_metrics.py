@@ -1,4 +1,4 @@
 
 
-def calc_class_accuracy():
+def calculate_class_accuracy():
     pass

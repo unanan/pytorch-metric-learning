@@ -8,6 +8,10 @@
 - The samples in my dataset are of different difficulties. The situations of the so many hard samples vary a lot.
 - _TO SEE THE ORIGINAL ```README.md```, PLEASE CHECK THE [```READMEorirepo.md```](./READMEorirepo.md)_
 
+### Requirements
+- Python >= 3.6 (Because I love f-string)
+- Pytorch better >=1.3 (It's developed under pt1.3)
+
 ### Introduction of some important scripts
 - a
 

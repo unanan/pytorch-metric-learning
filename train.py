@@ -13,9 +13,11 @@ from pytorch_metric_learning import losses as tripletloss
 from pytorch_metric_learning import miners as tripletminer
 
 import models
+from embclsnet import EmbClsNet
 from utils.calc_metrics import calculate_class_accuracy
 
-
+from torch.utils.data import DataLoader
+from datasets.customdataset import transforms
 
 def train(args):
 
@@ -28,19 +30,27 @@ def train(args):
         valset = None
     else:
         from datasets.customdataset import CustomDataset
-        trainset = CustomDataset()
-        valset = None
+        trainset = CustomDataset(
+            image_path=args.train_imgdir,
+            info_file=args.train_annofile,
+            num_class = args.num_class,
+            transform=transforms["train"])
+        valset = CustomDataset(
+            image_path=args.val_imgdir,
+            info_file=args.val_annofile,
+            num_class=args.num_class,
+            transform=transforms["val"])
 
-    trainloader = None
-    valloader = None
+    trainloader = DataLoader(trainset, args.train_batch_size,
+                             shuffle=True, num_workers=args.num_workers)
+    valloader = DataLoader(valset, args.val_batch_size,
+                             shuffle=False, num_workers=args.num_workers)
     # batch_num = len(trainloader)
 
 
     ### Init Model
     model = getattr(models, args.backbone)(pretrained = args.backbone_pretrained and not args.pretrained_model)
-    if args.cuda:
-        model = model.cuda()
-
+    model = EmbClsNet(model, args.num_class)
 
     ### Pretrained Model
     if args.pretrained_model:
@@ -57,13 +67,14 @@ def train(args):
         logging.warning(f"Format of args.devices is invalid. {args.devices}")
 
     if IS_DP_AVAILABLE:
-        pass
-
+        model = torch.nn.DataParallel(model)
+    if args.cuda:
+        model = model.cuda()
 
     ### Init Optimizer
     # optimizer = optim.SGD(model.parameters(), lr=args.start_lr,
     #                       momentum=args.momentum, weight_decay=args.weight_decay)
-    optimizer = optim.RMSprop(model.parameters(), lr=args.start_lr, alpha = 0.9, eps=1e-08,
+    optimizer = optim.RMSprop(model.parameters(), lr=args.start_lr, alpha=0.9, eps=1e-08,
                          momentum=args.momentum, weight_decay=args.weight_decay)
 
 
@@ -81,7 +92,7 @@ def train(args):
             imgs, labels = batch_data
 
             optimizer.zero_grad()
-            embeddings = model(imgs)
+            embeddings, scores = model(imgs)
 
             # Metric Learning
             if args.mining:
@@ -102,14 +113,12 @@ def train(args):
                 for valbatch_idx, valbatch_data in enumerate(valloader):
                     val_imgs, val_labels = valbatch_data
 
-                    val_embeddings = model(val_imgs)
+                    val_embeddings, val_scores = model(val_imgs)
 
                     # Metric Learning
                     val_loss = loss_func(val_embeddings, val_labels)
 
-                    # softmax
-                    #...
-                    cls_acc = calculate_class_accuracy()
+                    cls_acc = calculate_class_accuracy(val_scores, val_labels)
 
                     if args.val_print_interval % valbatch_idx == 0:
                         logging.info(f"[{epoch:%4d}/{args.max_epoch:%4d}] {interval:%7d} Triplet Loss: {val_loss} Cls Acc: {cls_acc}")
@@ -142,8 +151,11 @@ def get_args():
 
     # Dataset
     parser.add_argument('--data_format', default="custom", help='coco | custom')
+    parser.add_argument('--num_class', default=12, type=int, help='coco | custom')
     parser.add_argument('--train_imgdir', default="", help='the train images path')
+    parser.add_argument('--train_annofile', default="", help='the train images path')
     parser.add_argument('--val_imgdir', default="", help='the test images path')
+    parser.add_argument('--val_annofile', default="", help='the train images path')
     parser.add_argument('--img_maxsize', default=512, help='the image size')
     parser.add_argument('--num_workers', default=4, type=int, help='Number of workers used in dataloading')
 

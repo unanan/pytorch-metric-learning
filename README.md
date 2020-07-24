@@ -27,3 +27,5 @@
 #### Reference
 - BADBADBADBOY/pytorch.ctpn
 - dbolya/yolact
+- gatsby2016/Augmentation-PyTorch-Transforms 
+- adambielski/siamese-triplet 
